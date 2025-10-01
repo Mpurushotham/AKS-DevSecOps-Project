@@ -22,7 +22,7 @@ param agentCount int = 3
 param agentVMSize string = 'Standard_DS2_v2'
 
 // create azure container registry
-resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01' = {
+resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: 'acr${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
