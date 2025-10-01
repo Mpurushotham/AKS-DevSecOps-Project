@@ -1,0 +1,37 @@
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'tools/deploy/module0/**' ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy AKS via Bicep
+        run: |
+          az deployment group create \
+            --resource-group ${{ secrets.CLUSTER_RESOURCE_GROUP }} \
+            --template-file tools/deploy/module0/aks.bicep
+
+      - name: Register workload identity feature
+        run: |
+          az feature register --namespace "Microsoft.ContainerService" --name "EnableWorkloadIdentityPreview"
+
+      - name: Attach ACR to AKS
+        run: |
+          CLUSTER_NAME=$(az aks list --resource-group ${{ secrets.CLUSTER_RESOURCE_GROUP }} --query "[].name" -o tsv)
+          ACR_NAME=$(az acr list --resource-group ${{ secrets.CLUSTER_RESOURCE_GROUP }} --query "[].name" -o tsv)
+          az aks update -n $CLUSTER_NAME -g ${{ secrets.CLUSTER_RESOURCE_GROUP }} --attach-acr $ACR_NAME
