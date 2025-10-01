@@ -55,7 +55,6 @@ resource akv 'Microsoft.KeyVault/vaults@2022-07-01' = {
       }
     ]
   }
-  dependsOn: [ aks ]
 }
 
 output controlPlaneFQDN string = aks.properties.fqdn
